@@ -1,22 +1,27 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URI
 
 plugins {
     id("fabric-loom")
+    val kotlinVersion: String by System.getProperties()
+    kotlin("jvm").version(kotlinVersion)
 }
 
 base {
-    archivesName.set("playervisibility")
+    val archivesBaseName: String by project
+    archivesName.set(archivesBaseName)
 }
 
-version = "1.21.11-2.0.0"
-group = "win.transgirls"
+val modVersion: String by project
+version = modVersion
+val mavenGroup: String by project
+group = mavenGroup
 
 repositories {
-    mavenCentral()
-}
-
-loom {
-    accessWidenerPath.set(file("src/main/resources/playervisibility.aw"))
+    maven {
+        name = "CottonMC"
+        url = URI("https://server.bbkr.space/artifactory/libs-release")
+    }
 }
 
 dependencies {
@@ -28,12 +33,10 @@ dependencies {
     modImplementation("net.fabricmc:fabric-loader:$loaderVersion")
     val fabricVersion: String by project
     modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricVersion")
-
-    // Gson for config serialization
-    implementation("com.google.code.gson:gson:2.11.0")
-
-    // Mixin extras
-    implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.4.0")!!)
+    val fabricKotlinVersion: String by project
+    modImplementation("net.fabricmc:fabric-language-kotlin:$fabricKotlinVersion")
+    val libGuiVersion: String by project
+    modImplementation(include("io.github.cottonmc:LibGui:$libGuiVersion")!!)
 }
 
 tasks {
@@ -43,6 +46,12 @@ tasks {
         sourceCompatibility = javaVersion.toString()
         targetCompatibility = javaVersion.toString()
         options.release.set(javaVersion.toString().toInt())
+    }
+
+    withType<KotlinCompile> {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(javaVersion.toString()))
+        }
     }
 
     jar {
@@ -67,4 +76,3 @@ tasks {
         withSourcesJar()
     }
 }
-

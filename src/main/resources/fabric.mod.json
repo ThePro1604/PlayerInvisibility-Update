@@ -1,34 +1,42 @@
 {
- "schemaVersion": 1,
-  "id": "nbtviewer",
+  "schemaVersion": 1,
+  "id": "player-visibility",
   "version": "${version}",
-  "name": "NBT Viewer",
-  "description": "View the NBT data of your items",
+  "name": "Player Visibility",
+  "description": "Hide other players and entities at the press of a key!",
   "authors": [
-    "MarioAndWeegee3"
+    "xNasuni"
+  ],
+  "contributors": [
   ],
   "contact": {
-    "homepage": "https://marioandweegee3.github.io",
-    "issues": "https://github.com/MarioAndWeegee3/NBT-Viewer/issues",
-    "sources": "https://github.com/MarioAndWeegee3/NBT-Viewer"
+    "homepage": "",
+    "sources": "https://github.com/xNasuni/PlayerVisibility",
+    "issues": "https://github.com/xNasuni/PlayerVisibility/issues"
   },
-  "license": "MIT",
-  "icon": "assets/nbtviewer/icon.png",
+  "license": "BSD 3 Clause",
+  "icon": "assets/player-visibility/icon.png",
   "environment": "client",
+  "accessWidener": "playervisibility.aw",
   "entrypoints": {
     "client": [
-      {
-        "adapter": "kotlin",
-        "value": "marioandweegee3.nbtviewer.NBTViewerMod"
-      }
+      "win.transgirls.playervisibility.PlayerVisibility"
     ]
   },
-  "mixins": [],
+  "mixins": [
+    "player-visibility.mixins.json"
+  ],
   "depends": {
-    "fabricloader": "*",
+    "fabricloader": ">=0.16.0",
     "fabric": "*",
-    "fabric-language-kotlin": "*",
-    "minecraft": ">=1.21.8",
+    "minecraft": ">=1.21.11",
     "java": ">=21"
+  },
+  "suggests": {
+  },
+  "custom": {
+    "modmenu": {
+      "update_checker": true
+    }
   }
 }
