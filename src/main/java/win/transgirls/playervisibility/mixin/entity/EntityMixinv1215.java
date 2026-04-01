@@ -5,14 +5,19 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import win.transgirls.playervisibility.PlayerVisibility;
 import win.transgirls.playervisibility.config.ModConfig;
 import win.transgirls.playervisibility.types.TransparentVertexConsumerProvider;
-import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderManager;
-import net.minecraft.client.render.entity.EntityRenderer;
+import net.minecraft.client.render.entity.state.EntityRenderState;
+import net.minecraft.client.render.entity.state.PlayerEntityRenderState;
+import net.minecraft.client.render.state.CameraRenderState;
+import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static win.transgirls.playervisibility.PlayerVisibility.transparency;
 
@@ -20,33 +25,16 @@ import static win.transgirls.playervisibility.PlayerVisibility.transparency;
 public abstract class EntityMixinv1215 {
     @Shadow public abstract double getSquaredDistanceToCamera(Entity entity);
 
-    @WrapMethod(method = "(Lnet/minecraft/class_1297;DDDFLnet/minecraft/class_4587;Lnet/minecraft/class_4597;ILnet/minecraft/class_897;)V")
-    private <E extends Entity> void wrapRender(E entity, double x, double y, double z, float tickProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, EntityRenderer<?, ?> renderer, Operation<Void> original) {
-        transparency.put(entity, -1);
+    // Cancel rendering for hidden entities
+    @Inject(method = "render(Lnet/minecraft/client/render/entity/state/EntityRenderState;Lnet/minecraft/client/render/state/CameraRenderState;DDDLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/command/OrderedRenderCommandQueue;)V", at = @At("HEAD"), cancellable = true)
+    private <S extends EntityRenderState> void onRender(S renderState, CameraRenderState cameraState, double offsetX, double offsetY, double offsetZ, MatrixStack matrices, OrderedRenderCommandQueue queue, CallbackInfo ci) {
+        // Check if this is a player
+        boolean isPlayer = renderState instanceof PlayerEntityRenderState;
 
-        boolean shouldHide = (entity instanceof PlayerEntity && ModConfig.hidePlayers) || (!(entity instanceof PlayerEntity) && ModConfig.hideEntities);
+        boolean shouldHide = (isPlayer && ModConfig.hidePlayers) || (!isPlayer && ModConfig.hideEntities);
 
-        if (shouldHide && PlayerVisibility.shouldHideEntity(entity)) {
-            if (ModConfig.comfortZone) {
-                double sqDst = this.getSquaredDistanceToCamera(entity);
-                double distance = Math.sqrt(sqDst);
-
-                if (distance <= ModConfig.comfortDistance + ModConfig.comfortFalloff) {
-                    double transitionStart = ModConfig.comfortDistance; // 🏳️‍⚧️ :3
-                    double transitionEnd = ModConfig.comfortDistance + ModConfig.comfortFalloff;
-                    double falloffAmount = Math.min(Math.max((distance - transitionStart) / (transitionEnd - transitionStart), 0), 1);
-
-                    int falloff = (int) (falloffAmount * 255);
-                    transparency.put(entity, falloff);
-                }
-
-                if (transparency.get(entity) <= 0 && transparency.get(entity) != -1) {
-                } else {
-                    original.call(entity, x, y, z, tickProgress, matrices, new TransparentVertexConsumerProvider<E>(vertexConsumers, entity), light, renderer);
-                }
-            }
-            return;
+        if (shouldHide && PlayerVisibility.shouldHideEntityRenderState(renderState)) {
+            ci.cancel();
         }
-        original.call(entity, x, y, z, tickProgress, matrices, vertexConsumers, light, renderer);
     }
 }
