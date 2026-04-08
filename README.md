@@ -17,4 +17,4 @@ Hide players easily! PlayerVisibility is a fabric mod for Minecraft to hide othe
 
 #### Help
 If you need help to figure out how to use this, check out the [Wiki](https://github.com/xNasuni/PlayerVisibility/wiki)!<br>
-If you want to report a bug or suggest a new feature, make an issue in [Issues](https://github.com/xNasuni/PlayerVisibility/issues)!
+If you want to report a bug or suggest a new feature, make an issue in [Issues](https://github.com/ThePro1604/PlayerInvisibility-Update/issues)!
