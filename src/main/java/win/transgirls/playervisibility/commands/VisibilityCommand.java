@@ -22,13 +22,13 @@ import static com.mojang.brigadier.arguments.FloatArgumentType.floatArg;
 import static com.mojang.brigadier.arguments.FloatArgumentType.getFloat;
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static com.mojang.brigadier.arguments.StringArgumentType.string;
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument;
 
 import java.util.Objects;
 
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.player.AbstractClientPlayer;
 
 public class VisibilityCommand {
     public static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -53,9 +53,9 @@ public class VisibilityCommand {
         SuggestionProvider<FabricClientCommandSource> ingamePlayerSuggestionProvider = (context, builder) -> {
             String input = builder.getRemaining().toLowerCase();
 
-            if (minecraftClient.getNetworkHandler() != null) {
-                for (PlayerListEntry player: minecraftClient.getNetworkHandler().getPlayerList()) {
-                    String suggestion = player.getProfile().name();
+            if (minecraftClient.level != null) {
+                for (AbstractClientPlayer player: minecraftClient.level.players()) {
+                    String suggestion = player.getGameProfile().name();
                     if (suggestion != null && suggestion.toLowerCase().startsWith(input)) {
                         builder.suggest(suggestion);
                     }

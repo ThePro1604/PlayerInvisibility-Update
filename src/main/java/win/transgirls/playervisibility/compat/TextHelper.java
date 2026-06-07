@@ -1,17 +1,13 @@
 package win.transgirls.playervisibility.compat;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
-/**
- * Helper class to replace CrossFabric's VersionedText
- */
 public class TextHelper {
-    public static Text translatable(String key, Object... args) {
-        return Text.translatable(key, args);
+    public static Component translatable(String key, Object... args) {
+        return Component.translatable(key, args);
     }
-    
-    public static Text of(String text) {
-        return Text.literal(text);
+
+    public static Component of(String text) {
+        return Component.literal(text);
     }
 }
-

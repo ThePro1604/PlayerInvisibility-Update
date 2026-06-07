@@ -1,40 +1,30 @@
 package win.transgirls.playervisibility.mixin.entity;
 
-import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import win.transgirls.playervisibility.PlayerVisibility;
 import win.transgirls.playervisibility.config.ModConfig;
-import win.transgirls.playervisibility.types.TransparentVertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRenderManager;
-import net.minecraft.client.render.entity.state.EntityRenderState;
-import net.minecraft.client.render.entity.state.PlayerEntityRenderState;
-import net.minecraft.client.render.state.CameraRenderState;
-import net.minecraft.client.render.command.OrderedRenderCommandQueue;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import static win.transgirls.playervisibility.PlayerVisibility.transparency;
-
-@Mixin(value = EntityRenderManager.class, priority = 1001)
+@Mixin(value = EntityRenderDispatcher.class, priority = 1001)
 public abstract class EntityMixinv1215 {
-    @Shadow public abstract double getSquaredDistanceToCamera(Entity entity);
 
-    // Cancel rendering for hidden entities
-    @Inject(method = "render(Lnet/minecraft/client/render/entity/state/EntityRenderState;Lnet/minecraft/client/render/state/CameraRenderState;DDDLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/command/OrderedRenderCommandQueue;)V", at = @At("HEAD"), cancellable = true)
-    private <S extends EntityRenderState> void onRender(S renderState, CameraRenderState cameraState, double offsetX, double offsetY, double offsetZ, MatrixStack matrices, OrderedRenderCommandQueue queue, CallbackInfo ci) {
-        // Check if this is a player
-        boolean isPlayer = renderState instanceof PlayerEntityRenderState;
-
+    // Cancel shouldRender for hidden entities — prevents body, shadow, and nametag from rendering
+    @Inject(method = "shouldRender(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/culling/Frustum;DDD)Z",
+            at = @At("HEAD"), cancellable = true, require = 0)
+    private <E extends Entity> void onShouldRender(E entity, Frustum frustum, double x, double y, double z,
+                                                    CallbackInfoReturnable<Boolean> cir) {
+        boolean isPlayer = entity instanceof Player;
         boolean shouldHide = (isPlayer && ModConfig.hidePlayers) || (!isPlayer && ModConfig.hideEntities);
 
-        if (shouldHide && PlayerVisibility.shouldHideEntityRenderState(renderState)) {
-            ci.cancel();
+        if (shouldHide && PlayerVisibility.shouldHideEntity(entity)) {
+            cir.setReturnValue(false);
+            cir.cancel();
         }
     }
 }

@@ -1,14 +1,14 @@
 import java.net.URI
 
 plugins {
-    id("fabric-loom")
+    id("net.fabricmc.fabric-loom")
 }
 
 base {
     archivesName.set("playervisibility")
 }
 
-version = "1.21.11-2.0.0"
+version = "26.1-2.1.0"
 group = "win.transgirls"
 
 repositories {
@@ -22,12 +22,11 @@ loom {
 dependencies {
     val minecraftVersion: String by project
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    val yarnMappings: String by project
-    mappings("net.fabricmc:yarn:$yarnMappings:v2")
+    // No Yarn mappings — Minecraft 26.1 uses Mojang official (unobfuscated)
     val loaderVersion: String by project
-    modImplementation("net.fabricmc:fabric-loader:$loaderVersion")
+    implementation("net.fabricmc:fabric-loader:$loaderVersion")
     val fabricVersion: String by project
-    modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricVersion")
+    implementation("net.fabricmc.fabric-api:fabric-api:$fabricVersion")
 
     // Gson for config serialization
     implementation("com.google.code.gson:gson:2.11.0")
@@ -37,12 +36,12 @@ dependencies {
 }
 
 tasks {
-    val javaVersion = JavaVersion.VERSION_21
+    val javaVersion = JavaVersion.VERSION_25
     withType<JavaCompile> {
         options.encoding = "UTF-8"
         sourceCompatibility = javaVersion.toString()
         targetCompatibility = javaVersion.toString()
-        options.release.set(javaVersion.toString().toInt())
+        options.release.set(25)
     }
 
     jar {
@@ -60,11 +59,10 @@ tasks {
 
     java {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(javaVersion.toString()))
+            languageVersion.set(JavaLanguageVersion.of(25))
         }
         sourceCompatibility = javaVersion
         targetCompatibility = javaVersion
         withSourcesJar()
     }
 }
-

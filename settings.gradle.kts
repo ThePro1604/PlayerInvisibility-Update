@@ -8,7 +8,6 @@ pluginManagement {
     }
     plugins {
         val loomVersion: String by settings
-        id("fabric-loom").version(loomVersion)
+        id("net.fabricmc.fabric-loom").version(loomVersion)
     }
 }
-

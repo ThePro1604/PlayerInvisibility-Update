@@ -10,7 +10,6 @@
     "shadow.ShadowMixinv1215"
   ],
   "injectors": {
-    "defaultRequire": 1
+    "defaultRequire": 0
   }
 }
-

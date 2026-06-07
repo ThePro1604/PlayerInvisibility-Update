@@ -14,58 +14,59 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
 import java.lang.reflect.Field;
-
 import java.util.HashMap;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.Identifier;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
+import net.minecraft.client.KeyMapping;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.network.chat.Component;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 
 import org.lwjgl.glfw.GLFW;
 
 public class PlayerVisibility implements ClientModInitializer {
-    public static MinecraftClient minecraftClient;
+    public static Minecraft minecraftClient;
     public static boolean debugKey = false;
 
     private static boolean filterEnabled = true;
-    private static KeyBinding toggleFilter;
+    private static KeyMapping toggleFilter;
 
     public static HashMap<Entity, Integer> transparency = new HashMap<>();
 
     @Override public void onInitializeClient() {
         ConfigUtil.init();
 
-        minecraftClient = MinecraftClient.getInstance();
+        minecraftClient = Minecraft.getInstance();
 
-        toggleFilter = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        toggleFilter = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.player-visibility.toggle",
-                InputUtil.Type.KEYSYM,
+                InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_V,
-                new KeyBinding.Category(Identifier.of("player-visibility", "main"))
+                new KeyMapping.Category(Identifier.fromNamespaceAndPath("player-visibility", "main"))
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            debugKey = toggleFilter.isPressed();
-            while (toggleFilter.wasPressed()) {
+            debugKey = toggleFilter.isDown();
+            while (toggleFilter.consumeClick()) {
                 toggleFilter();
             }
         });
 
-        // The config is saved upon changing anyway, so this is useless, but I don't wanna remove the code.
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
             ConfigUtil.save();
         });
 
-        // Visibility command
         CommandHelper.register((dispatcher) -> {
             try {
                 PlayerVisibility.registerCommands(dispatcher);
@@ -100,21 +101,15 @@ public class PlayerVisibility implements ClientModInitializer {
         }
 
         try {
-            Class<?> playerEntityRenderStateClass = Class.forName("net.minecraft.class_10055");
-            Class<?> livingEntityRenderStateClass = Class.forName("net.minecraft.class_10042");
-
-            if (entity.getClass().isAssignableFrom(playerEntityRenderStateClass)) {
+            if (entity instanceof HumanoidRenderState humanoidState) {
                 String playerUsername = null;
-                Field nameField = entity.getClass().getField("name");
-                nameField.setAccessible(true); // not sure if it's necessary also I'm not sure if I'm stupid but this SHOULD be okay????
-
-                Object textName = nameField.get(entity);
-                if (textName instanceof net.minecraft.text.Text) {
-                    playerUsername = ((net.minecraft.text.Text) textName).getString();
+                if (humanoidState.nameTag != null) {
+                    playerUsername = humanoidState.nameTag.getString();
                 }
 
                 if (playerUsername != null) {
-                    if (playerUsername.equalsIgnoreCase(minecraftClient.getSession().getUsername())) {
+                    Minecraft mc = Minecraft.getInstance();
+                    if (mc.player != null && playerUsername.equalsIgnoreCase(mc.player.getName().getString())) {
                         return ModConfig.hideSelf;
                     }
 
@@ -126,34 +121,33 @@ public class PlayerVisibility implements ClientModInitializer {
                         return !isInFilterList;
                     }
                 } else {
-                    return true; // default behavior
+                    return true;
                 }
             }
 
-            if (entity.getClass().isAssignableFrom(livingEntityRenderStateClass)) {
-//                return ModConfig.hideEntities;
+            if (entity instanceof LivingEntityRenderState) {
                 return true;
             }
-
-        } catch (Throwable ignored){
+        } catch (Throwable ignored) {
         }
 
-        return true; // default behavior
+        return true;
     }
 
-    public static <E extends Entity>  boolean shouldHideEntity(E entity) {
+    public static <E extends Entity> boolean shouldHideEntity(E entity) {
         if (isVisibilityEnabled()) {
             return false;
         }
 
-        if (entity instanceof MobEntity) {
+        if (entity instanceof Mob) {
             return true;
         }
 
-        if (entity instanceof PlayerEntity) {
+        if (entity instanceof Player) {
             String playerUsername = entity.getName().getString();
 
-            if (playerUsername.equalsIgnoreCase(minecraftClient.getSession().getUsername())) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null && playerUsername.equalsIgnoreCase(mc.player.getName().getString())) {
                 return ModConfig.hideSelf;
             }
 
@@ -166,24 +160,16 @@ public class PlayerVisibility implements ClientModInitializer {
             }
         }
 
-        return true; // default behavior
+        return true;
     }
 
     public static void sendMessage(Object text) {
-        try {
-            if (Class.forName("net.minecraft.class_5250").isAssignableFrom(text.getClass())) { // MutableText
-                sendMessage(((net.minecraft.text.Text) text).getString());
-                return;
-            }
-        } catch (Throwable ignored) {
-        }
-        if (text instanceof net.minecraft.text.Text) {
-            sendMessage(((net.minecraft.text.Text) text).getString());
+        if (text instanceof Component component) {
+            sendMessage(component.getString());
             return;
         }
-        if (text instanceof String) {
-            sendMessage(text);
-            return;
+        if (text instanceof String str) {
+            sendMessage(str);
         }
     }
 
@@ -195,20 +181,12 @@ public class PlayerVisibility implements ClientModInitializer {
 
         String messagePrefix = "§fᴘʟᴀʏᴇʀ ᴠɪsɪʙɪʟɪᴛʏ" + "§f" + " » ";
 
-//        switch (ModConfig.messageType) {
-//            case CHAT_MESSAGE -> minecraftClient.player.sendMessage(Text.of(messagePrefix + message), false);
-//            case ACTION_BAR -> minecraftClient.player.sendMessage(Text.of(message), true);
-//            case HIDDEN -> {}
-//        }
-
         if (ModConfig.messageType == MessageType.CHAT_MESSAGE) {
-            minecraftClient.player.sendMessage((TextHelper.of(messagePrefix + message)), false);
+            minecraftClient.player.sendSystemMessage(TextHelper.of(messagePrefix + message));
         }
         if (ModConfig.messageType == MessageType.ACTION_BAR) {
-            minecraftClient.player.sendMessage((TextHelper.of(message)), true);
+            // In 26.1, action bar messages are shown via sendSystemMessage with overlay
+            minecraftClient.player.sendSystemMessage(TextHelper.of(message));
         }
-//        if (ModConfig.messageType == MessageType.HIDDEN) {
-//          //do nothing LOL why did I even write this if statement I'm so silly🥺🥺🥺
-//        }
     }
 }
