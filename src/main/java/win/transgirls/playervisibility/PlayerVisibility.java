@@ -13,9 +13,6 @@ import static win.transgirls.playervisibility.PlayerVisibilityClient.LOGGER;
 import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
-import java.lang.reflect.Field;
-import java.util.HashMap;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -41,8 +38,6 @@ public class PlayerVisibility implements ClientModInitializer {
 
     private static boolean filterEnabled = true;
     private static KeyMapping toggleFilter;
-
-    public static HashMap<Entity, Integer> transparency = new HashMap<>();
 
     @Override public void onInitializeClient() {
         ConfigUtil.init();

@@ -8,7 +8,7 @@ base {
     archivesName.set("playervisibility")
 }
 
-version = "26.1-2.1.0"
+version = "26.2-2.1.0"
 group = "win.transgirls"
 
 repositories {
@@ -22,7 +22,7 @@ loom {
 dependencies {
     val minecraftVersion: String by project
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    // No Yarn mappings — Minecraft 26.1 uses Mojang official (unobfuscated)
+    // No Yarn mappings — Minecraft 26.2 uses Mojang official (unobfuscated)
     val loaderVersion: String by project
     implementation("net.fabricmc:fabric-loader:$loaderVersion")
     val fabricVersion: String by project
