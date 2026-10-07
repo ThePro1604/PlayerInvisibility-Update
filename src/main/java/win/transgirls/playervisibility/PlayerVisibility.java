@@ -30,7 +30,6 @@ import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 
-import org.lwjgl.glfw.GLFW;
 
 public class PlayerVisibility implements ClientModInitializer {
     public static Minecraft minecraftClient;
@@ -46,8 +45,8 @@ public class PlayerVisibility implements ClientModInitializer {
 
         toggleFilter = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.player-visibility.toggle",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_V,
+                InputConstants.Type.KEYBOARD,
+                InputConstants.KEY_V,
                 new KeyMapping.Category(Identifier.fromNamespaceAndPath("player-visibility", "main"))
         ));
 

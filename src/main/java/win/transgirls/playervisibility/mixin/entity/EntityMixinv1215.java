@@ -15,10 +15,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class EntityMixinv1215 {
 
     // Cancel shouldRender for hidden entities — prevents body, shadow, and nametag from rendering
-    @Inject(method = "shouldRender(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/culling/Frustum;DDD)Z",
+    @Inject(method = "shouldRender(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/culling/Frustum;DDDF)Z",
             at = @At("HEAD"), cancellable = true, require = 0)
     private <E extends Entity> void onShouldRender(E entity, Frustum frustum, double x, double y, double z,
-                                                    CallbackInfoReturnable<Boolean> cir) {
+                                                    float partialTick, CallbackInfoReturnable<Boolean> cir) {
         boolean isPlayer = entity instanceof Player;
         boolean shouldHide = (isPlayer && ModConfig.hidePlayers) || (!isPlayer && ModConfig.hideEntities);
 
